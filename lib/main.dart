@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -13,7 +12,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flavourly',
+      title: 'Flavorly',
       theme: AppTheme.lightTheme,
       home: const HomeScreen(),
     );
@@ -27,7 +26,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Flavourly')),
+      appBar: AppBar(title: const Text('Flavorly')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(48.0),
@@ -36,7 +35,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               // App Titel
               Text(
-                'Flavourly',
+                'Flavorly',
                 style: Theme.of(context).textTheme.headlineLarge,
                 textAlign: TextAlign.center,
               ),

@@ -105,7 +105,7 @@ class AppTheme {
       ),
 
       // Cards
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 6,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -191,7 +191,7 @@ class AppTheme {
       ),
 
       // Navigation
-      tabBarTheme: const TabBarTheme(
+      tabBarTheme: const TabBarThemeData(
         labelColor: AppColors.primary,
         unselectedLabelColor: AppColors.support,
         labelStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
@@ -232,7 +232,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
 
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

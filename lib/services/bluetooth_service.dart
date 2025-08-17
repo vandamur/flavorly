@@ -56,9 +56,20 @@ class BluetoothService {
           _scanResults.sort((a, b) => b.rssi.compareTo(a.rssi));
           _scanResultsController.add(_scanResults);
 
+          // Debug: Alle gefundenen Geräte loggen
           for (var result in results) {
-            if (result.device.platformName == "flavorly") {
-              dd.log("Found flavorly, attempting to connect...");
+            dd.log(
+              "Found device: ${result.device.platformName} (${result.device.remoteId})",
+            );
+          }
+
+          // Automatisch verbinden wenn Arduino/ESP/Flavorly gefunden wird
+          for (var result in results) {
+            String deviceName = result.device.platformName.toLowerCase();
+            if (deviceName.contains("flavorly")) {
+              dd.log(
+                "Found target device: ${result.device.platformName}, attempting to connect...",
+              );
               stopScan();
               connect(result.device);
               return;

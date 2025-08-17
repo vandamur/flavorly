@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/bluetooth_service.dart';
+import '../services/recipe_executor.dart';
+import '../data/recipes.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart' as fbp;
 import 'dart:async';
 
@@ -14,11 +16,13 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late final BluetoothService _bluetooth;
+  late final RecipeExecutor _recipeExecutor;
   final TextEditingController _textController = TextEditingController();
   String _receivedData = "";
   double _targetWeight = 0.0;
   bool _isTaring = false;
   int _motorID = 1;
+  String _selectedRecipe = "muhammara";
 
   fbp.BluetoothDevice? _connectedDevice;
 
@@ -30,6 +34,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _bluetooth = widget.bluetoothService;
+    _recipeExecutor = RecipeExecutor(_bluetooth);
     _setupBluetoothListeners();
 
     // Aktuellen Verbindungsstatus abrufen
@@ -52,6 +57,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         setState(() {
           _receivedData = data;
         });
+        // Update Recipe Executor für Progress
+        _recipeExecutor.updateProgress(data);
       }
     });
   }
@@ -83,15 +90,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // Stream-Subscriptions ordnungsgemäß beenden
     _connectionSubscription?.cancel();
     _dataSubscription?.cancel();
+    _recipeExecutor.dispose();
     _textController.dispose();
     super.dispose();
+  }
+
+  void _showRecipeTestDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (context) => RecipeTestDialog(
+            recipeName: _selectedRecipe,
+            recipeExecutor: _recipeExecutor,
+          ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Settings & Debug')),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(32.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -104,6 +124,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 10),
 
             if (_connectedDevice != null) ...[
+              // Rezept Test Sektion
+              const Text(
+                'Rezept Test:',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+
+              Row(
+                children: [
+                  const Text('Rezept: '),
+                  Expanded(
+                    child: DropdownButton<String>(
+                      value: _selectedRecipe,
+                      items:
+                          RecipeCatalog.getAllRecipeNames()
+                              .map(
+                                (name) => DropdownMenuItem(
+                                  value: name,
+                                  child: Text(name),
+                                ),
+                              )
+                              .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedRecipe = value!;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              ElevatedButton(
+                onPressed: _showRecipeTestDialog,
+                child: const Text('Rezept Testen'),
+              ),
+
+              const SizedBox(height: 20),
+              const Divider(),
+              const SizedBox(height: 10),
               TextField(
                 controller: _textController,
                 decoration: const InputDecoration(
@@ -243,6 +305,115 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class RecipeTestDialog extends StatefulWidget {
+  final String recipeName;
+  final RecipeExecutor recipeExecutor;
+
+  const RecipeTestDialog({
+    super.key,
+    required this.recipeName,
+    required this.recipeExecutor,
+  });
+
+  @override
+  State<RecipeTestDialog> createState() => _RecipeTestDialogState();
+}
+
+class _RecipeTestDialogState extends State<RecipeTestDialog> {
+  String _status = "";
+  double _currentWeight = 0.0;
+  double _targetWeight = 0.0;
+  StreamSubscription? _statusSub;
+  StreamSubscription? _progressSub;
+  StreamSubscription? _targetSub;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _statusSub = widget.recipeExecutor.statusStream.listen((status) {
+      if (mounted) {
+        setState(() {
+          _status = status;
+        });
+      }
+    });
+
+    _progressSub = widget.recipeExecutor.progressStream.listen((weight) {
+      if (mounted) {
+        setState(() {
+          _currentWeight = weight;
+        });
+      }
+    });
+
+    _targetSub = widget.recipeExecutor.targetStream.listen((target) {
+      if (mounted) {
+        setState(() {
+          _targetWeight = target;
+        });
+      }
+    });
+
+    // Rezept starten
+    widget.recipeExecutor.executeRecipe(widget.recipeName);
+  }
+
+  @override
+  void dispose() {
+    _statusSub?.cancel();
+    _progressSub?.cancel();
+    _targetSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = _targetWeight > 0 ? _currentWeight / _targetWeight : 0.0;
+
+    return AlertDialog(
+      title: Text('Rezept: ${widget.recipeName}'),
+      content: SizedBox(
+        width: 300,
+        height: 200,
+        child: Column(
+          children: [
+            Text(_status, style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 20),
+
+            if (_targetWeight > 0) ...[
+              Text(
+                '${_currentWeight.toStringAsFixed(1)}g / ${_targetWeight.toStringAsFixed(1)}g',
+              ),
+              const SizedBox(height: 10),
+              LinearProgressIndicator(
+                value: progress.clamp(0.0, 1.0),
+                minHeight: 8,
+                backgroundColor: Colors.grey[300],
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            widget.recipeExecutor.stop();
+            Navigator.of(context).pop();
+          },
+          child: const Text('Stoppen'),
+        ),
+        if (_status.contains('fertig'))
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+      ],
     );
   }
 }

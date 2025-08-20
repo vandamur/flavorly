@@ -93,6 +93,12 @@ void setup()
   Serial.print("Loaded calibration value: ");
   Serial.println(calibrationValue);
 
+  // Check if EEPROM is empty (NaN value) and set default value
+  if (isnan(calibrationValue)) {
+    calibrationValue = 16000.0;
+    Serial.println("EEPROM was empty (NaN), using default calibration value: 16000");
+  }
+
   // Apply the calibration value
   LoadCell.setCalFactor(calibrationValue);
 

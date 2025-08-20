@@ -18,7 +18,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flavorly',
+      title: 'flavorly',
       theme: AppTheme.lightTheme,
       home: const StartScreen(),
     );
@@ -168,7 +168,7 @@ class _StartScreenState extends State<StartScreen> {
                     Image.asset('assets/flavorly.png', height: 120, width: 120),
                     const SizedBox(height: 24),
                     Text(
-                      'Flavorly',
+                      'flavorly',
                       style: Theme.of(
                         context,
                       ).textTheme.headlineLarge?.copyWith(

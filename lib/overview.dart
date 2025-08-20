@@ -118,7 +118,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
               child: Row(
                 children: [
                   Text(
-                    'Flavorly',
+                    'flavorly',
                     style: Theme.of(
                       context,
                     ).textTheme.headlineMedium?.copyWith(color: Colors.white),

@@ -5,6 +5,7 @@ import '../data/recipes.dart';
 class RecipeExecutor {
   final BluetoothService _bluetooth;
   StreamSubscription<String>? _bluetoothDataSubscription;
+  bool _debugMode = false; // Debug-Modus Flag
 
   // Motor-Mapping
   static const Map<String, int> spiceToMotor = {
@@ -26,25 +27,29 @@ class RecipeExecutor {
   Stream<double> get progressStream => _progressController.stream;
   Stream<double> get targetStream => _targetController.stream;
 
-  RecipeExecutor(this._bluetooth) {
+  RecipeExecutor(this._bluetooth, {bool debugMode = false})
+    : _debugMode = debugMode {
     // Bluetooth-Daten abonnieren
     _bluetoothDataSubscription = _bluetooth.receivedData.listen((data) {
       _lastReceivedWeight = data.trim();
     });
   }
 
-  Future<void> executeRecipe(String recipeName) async {
+  Future<void> executeRecipe(String recipeName, [int portions = 1]) async {
     if (_isExecuting) return;
 
     final recipe = RecipeCatalog.getRecipe(recipeName);
     if (recipe == null) return;
 
     _isExecuting = true;
-    _statusController.add("Rezept $recipeName gestartet");
+    _statusController.add(
+      "Rezept $recipeName gestartet (${portions} Portion${portions == 1 ? '' : 'en'})",
+    );
 
     try {
       for (String spice in spiceToMotor.keys) {
-        final amount = recipe[spice] ?? 0.0;
+        final baseAmount = recipe[spice] ?? 0.0;
+        final amount = baseAmount * portions; // Portionsgröße berücksichtigen
         if (amount <= 0) continue;
 
         await _grindSpice(spice, amount);
@@ -65,16 +70,42 @@ class RecipeExecutor {
     _targetController.add(targetWeight);
     _statusController.add("Mahle $spice (${targetWeight}g)");
 
-    // Motor starten
-    _bluetooth.sendData("<1;$motorID;$targetWeight>");
-    await Future.delayed(Duration(milliseconds: 500));
+    if (_debugMode) {
+      // Debug-Simulation: 3 Sekunden Mahlvorgang
+      await _simulateGrinding(targetWeight);
+    } else {
+      // Echter Mahlvorgang
+      // Motor starten
+      _bluetooth.sendData("<1;$motorID;$targetWeight>");
+      await Future.delayed(Duration(milliseconds: 500));
 
-    // Warten bis Zielgewicht erreicht
-    await _waitForTargetWeight(targetWeight);
+      // Warten bis Zielgewicht erreicht
+      await _waitForTargetWeight(targetWeight);
 
-    // Motor stoppen
-    _bluetooth.sendData("<0;$motorID;0>");
-    await Future.delayed(Duration(milliseconds: 500));
+      // Motor stoppen
+      _bluetooth.sendData("<0;$motorID;0>");
+      await Future.delayed(Duration(milliseconds: 500));
+    }
+  }
+
+  Future<void> _simulateGrinding(double targetWeight) async {
+    const totalDuration = 3000; // 3 Sekunden
+    const updateInterval = 100; // Update alle 100ms
+    const steps = totalDuration ~/ updateInterval;
+
+    for (int i = 0; i <= steps && _isExecuting; i++) {
+      final progress = i / steps;
+      final currentWeight = targetWeight * progress;
+
+      _progressController.add(currentWeight);
+      _statusController.add(
+        "Mahle... ${currentWeight.toStringAsFixed(1)}g / ${targetWeight.toStringAsFixed(1)}g",
+      );
+
+      if (i < steps) {
+        await Future.delayed(Duration(milliseconds: updateInterval));
+      }
+    }
   }
 
   String _getCurrentWeightFromBluetooth() {
@@ -122,9 +153,19 @@ class RecipeExecutor {
   }
 
   Future<void> _tareAndWait() async {
-    _statusController.add("Tariere Waage...");
-    _bluetooth.sendData("<2;0;0>");
-    await Future.delayed(Duration(seconds: 2));
+    if (_debugMode) {
+      _statusController.add("Tariere Waage...");
+      await Future.delayed(Duration(milliseconds: 500)); // Verkürzt für Debug
+    } else {
+      _statusController.add("Tariere Waage...");
+      _bluetooth.sendData("<2;0;0>");
+      await Future.delayed(Duration(seconds: 2));
+    }
+  }
+
+  // Öffentliche Tarierungsmethode
+  Future<void> tare() async {
+    await _tareAndWait();
   }
 
   void dispose() {

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../data/recipes.dart';
+import 'grinding_process_screen.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final String recipeName;
   final String imagePath;
   final String category;
   final String recipeKey; // Key für recipes.dart Mapping
+  final bool isDebugMode;
 
   const RecipeDetailScreen({
     super.key,
@@ -14,6 +16,7 @@ class RecipeDetailScreen extends StatefulWidget {
     required this.imagePath,
     required this.category,
     required this.recipeKey,
+    this.isDebugMode = false,
   });
 
   @override
@@ -417,17 +420,20 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                   onPressed:
                                       recipe != null
                                           ? () {
-                                            // TODO: Implementierung des Mahlvorgangs
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  'Mahlvorgang für $portions Portionen wird gestartet...',
-                                                ),
-                                                backgroundColor:
-                                                    AppColors.primary,
-                                              ),
+                                            // Zeige Glasplatzierungs-Popup
+                                            showDialog(
+                                              context: context,
+                                              barrierDismissible: false,
+                                              builder:
+                                                  (context) =>
+                                                      GlassPlacementDialog(
+                                                        recipeName:
+                                                            widget.recipeName,
+                                                        portions: portions,
+                                                        recipeKey: recipeKey,
+                                                        isDebugMode:
+                                                            widget.isDebugMode,
+                                                      ),
                                             );
                                           }
                                           : null,

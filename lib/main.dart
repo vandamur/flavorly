@@ -253,7 +253,10 @@ class _StartScreenState extends State<StartScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const OverviewScreen(),
+                                builder:
+                                    (context) => const OverviewScreen(
+                                      isDebugMode: false,
+                                    ),
                               ),
                             );
                           }
@@ -338,7 +341,9 @@ class _StartScreenState extends State<StartScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const OverviewScreen(),
+                        builder:
+                            (context) =>
+                                const OverviewScreen(isDebugMode: true),
                       ),
                     );
                   },

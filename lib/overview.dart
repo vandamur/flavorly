@@ -3,7 +3,9 @@ import 'theme/app_colors.dart';
 import 'screens/recipe_detail_screen.dart';
 
 class OverviewScreen extends StatefulWidget {
-  const OverviewScreen({super.key});
+  final bool isDebugMode;
+
+  const OverviewScreen({super.key, this.isDebugMode = false});
 
   @override
   State<OverviewScreen> createState() => _OverviewScreenState();
@@ -189,6 +191,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
                   return RecipeCard(
                     recipe: recipe,
                     recipeKey: _getRecipeKey(recipe.name),
+                    isDebugMode: widget.isDebugMode,
                   );
                 },
               ),
@@ -211,8 +214,14 @@ class Recipe {
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
   final String recipeKey;
+  final bool isDebugMode;
 
-  const RecipeCard({super.key, required this.recipe, required this.recipeKey});
+  const RecipeCard({
+    super.key,
+    required this.recipe,
+    required this.recipeKey,
+    required this.isDebugMode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -231,6 +240,7 @@ class RecipeCard extends StatelessWidget {
                     imagePath: recipe.imagePath,
                     category: recipe.category,
                     recipeKey: recipeKey,
+                    isDebugMode: isDebugMode,
                   ),
             ),
           );

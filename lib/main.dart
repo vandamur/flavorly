@@ -177,12 +177,6 @@ class _StartScreenState extends State<StartScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Ihre Rezeptsammlung',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.support,
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -326,6 +320,47 @@ class _StartScreenState extends State<StartScreen> {
                         'Einstellungen',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Debug Button - erlaubt Start ohne Bluetooth
+              SizedBox(
+                width: 300,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const OverviewScreen(),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.orange,
+                    side: const BorderSide(color: Colors.orange, width: 2),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.bug_report, size: 24),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Debug',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleMedium?.copyWith(
+                          color: Colors.orange,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

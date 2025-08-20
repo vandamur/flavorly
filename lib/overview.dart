@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'theme/app_colors.dart';
+import 'screens/recipe_detail_screen.dart';
 
 class OverviewScreen extends StatefulWidget {
   const OverviewScreen({super.key});
@@ -66,6 +67,34 @@ class _OverviewScreenState extends State<OverviewScreen> {
         .toList();
   }
 
+  // Hilfsfunktion zum Mapping von UI-Namen zu Rezept-Keys
+  String _getRecipeKey(String recipeName) {
+    const Map<String, String> recipeKeyMapping = {
+      'Baba Ganoush': 'baba_ganoush',
+      'Barbacoa': 'barbacoa',
+      'Brasilianisches Picadillo': 'picadillo',
+      'Cowboy Caviar': 'cowboy_caviar',
+      'Feuertopf': 'feuertopf',
+      'Ful Medames': 'ful_medames',
+      'Gefüllte Auberginen': 'auberginen',
+      'Gelbe Zucchini Pfanne': 'zucchini_pfanne',
+      'Italienische Tomatensoße': 'tomatensosse',
+      'Köfte': 'koefte',
+      'Kubanische Empanadas': 'empanadas',
+      'Muhammara': 'muhammara',
+      'Paprika Feta Dip': 'paprika_feta_dip',
+      'Pilz Döner': 'doener',
+      'Puten Gyros': 'puten_gyros',
+      'Ropa Vieja': 'ropa_vieja',
+      'Salsa Roja': 'salsa_roja',
+      'Tex Mex Auflauf': 'tex_mex',
+      'Tintenfisch': 'tintenfisch',
+      'Würziger Feta Aufstrich': 'feta_aufstrich',
+    };
+    return recipeKeyMapping[recipeName] ??
+        recipeName.toLowerCase().replaceAll(' ', '_');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,11 +102,11 @@ class _OverviewScreenState extends State<OverviewScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header mit Suchfeld
+            // Header
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color: AppColors.primary,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
@@ -86,33 +115,13 @@ class _OverviewScreenState extends State<OverviewScreen> {
                   ),
                 ],
               ),
-              child: Column(
+              child: Row(
                 children: [
-                  // App Logo/Titel
-                  Row(
-                    children: [
-                      Image.asset('assets/flavorly.png', height: 40, width: 40),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Flavorly',
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Suchfeld
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Rezept suchen...',
-                      prefixIcon: const Icon(Icons.search, size: 28),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.background,
-                    ),
+                  Text(
+                    'Flavorly',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.headlineMedium?.copyWith(color: Colors.white),
                   ),
                 ],
               ),
@@ -177,7 +186,10 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 itemCount: filteredRecipes.length,
                 itemBuilder: (context, index) {
                   final recipe = filteredRecipes[index];
-                  return RecipeCard(recipe: recipe);
+                  return RecipeCard(
+                    recipe: recipe,
+                    recipeKey: _getRecipeKey(recipe.name),
+                  );
                 },
               ),
             ),
@@ -198,8 +210,9 @@ class Recipe {
 
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
+  final String recipeKey;
 
-  const RecipeCard({super.key, required this.recipe});
+  const RecipeCard({super.key, required this.recipe, required this.recipeKey});
 
   @override
   Widget build(BuildContext context) {
@@ -208,7 +221,19 @@ class RecipeCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
-          // TODO: Navigation zu Rezeptdetails
+          // Navigation zur Rezeptdetailseite
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => RecipeDetailScreen(
+                    recipeName: recipe.name,
+                    imagePath: recipe.imagePath,
+                    category: recipe.category,
+                    recipeKey: recipeKey,
+                  ),
+            ),
+          );
         },
         borderRadius: BorderRadius.circular(16),
         child: Column(

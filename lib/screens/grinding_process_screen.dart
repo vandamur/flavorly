@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../services/bluetooth_service.dart';
 import '../services/recipe_executor.dart';
+import '../overview.dart';
 import 'dart:async';
 
 // Popup für Glasplatzierung
@@ -246,6 +247,22 @@ class _GrindingProcessScreenState extends State<GrindingProcessScreen> {
     _recipeExecutor.executeRecipe(widget.recipeKey, widget.portions);
   }
 
+  Future<void> _goBackToOverviewWithTare() async {
+    // Tarierung im Hintergrund starten (non-blocking)
+    _recipeExecutor.tare().catchError((error) {
+      // Fehler beim Tarieren ignorieren, da es im Hintergrund läuft
+      print('Fehler beim Tarieren im Hintergrund: $error');
+    });
+
+    // Zurück zum Overview Screen navigieren
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => OverviewScreen(isDebugMode: widget.isDebugMode),
+      ),
+      (route) => false, // Entferne alle vorherigen Routen
+    );
+  }
+
   void _showCompletionDialog() {
     showDialog(
       context: context,
@@ -305,10 +322,10 @@ class _GrindingProcessScreenState extends State<GrindingProcessScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Schließe alle Screens und gehe zurück zum Start
                         Navigator.of(
                           context,
-                        ).popUntil((route) => route.isFirst);
+                        ).pop(); // Schließe zuerst den Dialog
+                        _goBackToOverviewWithTare(); // Dann navigiere mit Tarierung
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,

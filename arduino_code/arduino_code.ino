@@ -122,21 +122,15 @@ void loop()
 
   // ################################ MOTOR RELATED START
   // If the current weight is above 0.4*TARGET_WEIGHT, slow down the motor to 70% of TARGET_MOTOR_SPEED
-  if (CURRENT_WEIGHT >= 0.4 * TARGET_WEIGHT && CURRENT_WEIGHT < 0.8 * TARGET_WEIGHT && flavorly_is_running == true)
+  if (CURRENT_WEIGHT >= 0.8 * TARGET_WEIGHT && CURRENT_WEIGHT < 0.8 * TARGET_WEIGHT && flavorly_is_running == true)
   {
     int newSpeed = TARGET_MOTOR_SPEED * 0.7;
     startMotor(newSpeed);
   }
 
-  // If the current weight is above 0.8*TARGET_WEIGHT, slow down the motor to 50% of TARGET_MOTOR_SPEED
-  if (CURRENT_WEIGHT >= 0.8 * TARGET_WEIGHT && CURRENT_WEIGHT < 0.9 * TARGET_WEIGHT && flavorly_is_running == true)
-  {
-    int newSpeed = TARGET_MOTOR_SPEED * 0.5;
-    startMotor(newSpeed);
-  }
 
   // If the current weight is above 0.9*TARGET_WEIGHT, stop the motor
-  if (CURRENT_WEIGHT >= 0.9 * TARGET_WEIGHT)
+  if (CURRENT_WEIGHT >= 0.95 * TARGET_WEIGHT)
   {
     stopMotor();
   }

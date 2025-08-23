@@ -22,6 +22,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
     'Vegetarisch',
     'Fleisch',
     'Laktosefrei',
+    'Glutenfrei',
     'International',
   ];
 

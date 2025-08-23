@@ -392,7 +392,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                 ),
                                 child: IconButton(
                                   onPressed:
-                                      portions < 10
+                                      portions < 4
                                           ? () {
                                             setState(() {
                                               portions++;

@@ -237,7 +237,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      _bluetooth.sendData("<-1;$_motorID;$_targetWeight>");
+                      _bluetooth.sendData("<4;$_motorID;$_targetWeight>");
                     },
                     child: const Text('Test reverse'),
                   ),

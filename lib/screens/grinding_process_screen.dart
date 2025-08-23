@@ -24,64 +24,124 @@ class GlassPlacementDialog extends StatefulWidget {
   State<GlassPlacementDialog> createState() => _GlassPlacementDialogState();
 }
 
+enum _DialogPhase { placement, taring, grinding, finished }
+
 class _GlassPlacementDialogState extends State<GlassPlacementDialog> {
-  bool _isProcessing = false;
-  String _statusText = 'Das Glas muss auf der markierten Fläche stehen';
+  _DialogPhase _phase = _DialogPhase.placement;
+  late BluetoothService _bluetooth;
+  RecipeExecutor? _recipeExecutor;
+  String _status = '';
+  double _currentWeight = 0.0;
+  double _targetWeight = 0.0;
+  StreamSubscription? _statusSub;
+  StreamSubscription? _progressSub;
+  StreamSubscription? _targetSub;
+  bool _cancelRequested = false;
 
-  Future<void> _startTareAndGrinding() async {
-    setState(() {
-      _isProcessing = true;
-      _statusText = 'Tariere Waage...';
+  // QR Code Mapping
+  static const Map<String, String> _qrMap = {
+    'auberginen': 'assets/qr_codes/auberginen_qr.png',
+    'baba_ganoush': 'assets/qr_codes/baba_ganoush_qr.png',
+    'barbacoa': 'assets/qr_codes/barbacoa_qr.png',
+    'cowboy_caviar': 'assets/qr_codes/cowboy_caviar_qr.png',
+    'doener': 'assets/qr_codes/pilz_doener_qr.png',
+    'empanadas': 'assets/qr_codes/empanadas_qr.png',
+    'feta_aufstrich': 'assets/qr_codes/feta_aufstrich_qr.png',
+    'feuertopf': 'assets/qr_codes/feuertopf_qr.png',
+    'ful_medames': 'assets/qr_codes/ful_medames_qr.png',
+    'koefte': 'assets/qr_codes/koefte_qr.png',
+    'muhammara': 'assets/qr_codes/muhammara_qr.png',
+    'paprika_feta_dip': 'assets/qr_codes/paprika_feta_dip_qr.png',
+    'picadillo': 'assets/qr_codes/picadillo_qr.png',
+    'puten_gyros': 'assets/qr_codes/puten_gyros_qr.png',
+    'ropa_vieja': 'assets/qr_codes/ropa_veja_qr.png',
+    'salsa_roja': 'assets/qr_codes/salsa_roja_qr.png',
+    'tex_mex': 'assets/qr_codes/texmex_qr.png',
+    'tintenfisch': 'assets/qr_codes/tintenfisch_qr.png',
+    'tomatensosse': 'assets/qr_codes/tomatensosse_qr.png',
+    'zucchini_pfanne': 'assets/qr_codes/zucchini_qr.png',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _bluetooth = BluetoothService();
+  }
+
+  Future<void> _startProcess() async {
+    if (_phase != _DialogPhase.placement) return;
+    setState(() => _phase = _DialogPhase.taring);
+
+    _recipeExecutor = RecipeExecutor(_bluetooth, debugMode: widget.isDebugMode);
+    _listenStreams();
+
+    // Tare
+    await _recipeExecutor!.tare();
+    if (!mounted || _cancelRequested) return;
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    setState(() => _phase = _DialogPhase.grinding);
+    _recipeExecutor!.executeRecipe(widget.recipeKey, widget.portions);
+  }
+
+  void _listenStreams() {
+    _statusSub = _recipeExecutor!.statusStream.listen((s) {
+      if (!mounted) return;
+      setState(() => _status = s);
+      if (s.contains('Rezept fertig!')) {
+        setState(() => _phase = _DialogPhase.finished);
+      }
     });
+    _progressSub = _recipeExecutor!.progressStream.listen((w) {
+      if (!mounted) return;
+      setState(() => _currentWeight = w);
+    });
+    _targetSub = _recipeExecutor!.targetStream.listen((t) {
+      if (!mounted) return;
+      setState(() => _targetWeight = t);
+    });
+  }
 
-    // Tarierung durchführen
-    final bluetooth = BluetoothService();
-    final recipeExecutor = RecipeExecutor(
-      bluetooth,
-      debugMode: widget.isDebugMode,
+  double get _progress =>
+      _targetWeight > 0
+          ? (_currentWeight / _targetWeight).clamp(0.0, 1.0)
+          : 0.0;
+
+  Future<void> _navigateBack() async {
+    // Optional nochmal tarieren
+    try {
+      await _recipeExecutor?.tare();
+    } catch (_) {}
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => OverviewScreen(isDebugMode: widget.isDebugMode),
+      ),
+      (route) => false,
     );
+  }
 
-    // Tarierung ausführen
-    await recipeExecutor.tare();
-
-    setState(() {
-      _statusText = 'Vorbereitung läuft...';
-    });
-
-    // 2 Sekunden Wartepause
-    await Future.delayed(Duration(seconds: 2));
-
-    // RecipeExecutor ordnungsgemäß entsorgen
-    recipeExecutor.dispose();
-
-    if (mounted) {
-      Navigator.of(context).pop();
-      // Navigation zum Mahlvorgang-Screen
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder:
-              (context) => GrindingProcessScreen(
-                recipeName: widget.recipeName,
-                portions: widget.portions,
-                recipeKey: widget.recipeKey,
-                isDebugMode: widget.isDebugMode,
-              ),
-        ),
-      );
-    }
+  void _cancel() {
+    _cancelRequested = true;
+    _recipeExecutor?.stop();
+    Navigator.of(context).pop();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
-        padding: const EdgeInsets.all(32),
-        child: Column(
+  void dispose() {
+    _statusSub?.cancel();
+    _progressSub?.cancel();
+    _targetSub?.cancel();
+    _recipeExecutor?.dispose();
+    super.dispose();
+  }
+
+  Widget _buildBody() {
+    switch (_phase) {
+      case _DialogPhase.placement:
+        return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Titel
             Text(
               'Bitte Glas platzieren',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -90,482 +150,221 @@ class _GlassPlacementDialogState extends State<GlassPlacementDialog> {
               ),
               textAlign: TextAlign.center,
             ),
-
             const SizedBox(height: 16),
-
-            // Untertitel
             Text(
-              _statusText,
+              'Das Glas muss auf der markierten Fläche stehen',
+              textAlign: TextAlign.center,
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(color: AppColors.onSurface),
-              textAlign: TextAlign.center,
             ),
-
             const SizedBox(height: 32),
-
-            // Glas Icon
             Image.asset(
               'assets/glass.png',
               height: 120,
               width: 120,
-              errorBuilder: (context, error, stackTrace) {
-                return Icon(
-                  Icons.local_drink,
-                  size: 120,
-                  color: AppColors.support,
-                );
-              },
+              errorBuilder:
+                  (_, __, ___) => Icon(
+                    Icons.local_drink,
+                    size: 120,
+                    color: AppColors.support,
+                  ),
             ),
-
             const SizedBox(height: 32),
-
-            // Bestätigungsbutton
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _isProcessing ? null : _startTareAndGrinding,
+                onPressed: _startProcess,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      _isProcessing ? Colors.grey : AppColors.support,
+                  backgroundColor: AppColors.support,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (_isProcessing) ...[
-                      SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                    ],
-                    Text(
-                      _isProcessing
-                          ? 'Vorbereitung...'
-                          : 'Ich habe das Glas platziert',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+                child: const Text(
+                  'Ich habe das Glas platziert',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
-
-            const SizedBox(height: 16),
           ],
+        );
+      case _DialogPhase.taring:
+        return _buildProgressSection(title: 'Tariere Waage...');
+      case _DialogPhase.grinding:
+        return _buildGrindingSection();
+      case _DialogPhase.finished:
+        return _buildFinishedSection();
+    }
+  }
+
+  Widget _buildProgressSection({required String title}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: AppColors.primary,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
         ),
-      ),
-    );
-  }
-}
-
-// Screen für den Mahlvorgang
-class GrindingProcessScreen extends StatefulWidget {
-  final String recipeName;
-  final int portions;
-  final String recipeKey;
-  final bool isDebugMode;
-
-  const GrindingProcessScreen({
-    super.key,
-    required this.recipeName,
-    required this.portions,
-    required this.recipeKey,
-    this.isDebugMode = false,
-  });
-
-  @override
-  State<GrindingProcessScreen> createState() => _GrindingProcessScreenState();
-}
-
-class _GrindingProcessScreenState extends State<GrindingProcessScreen> {
-  late BluetoothService _bluetooth;
-  late RecipeExecutor _recipeExecutor;
-  String _status = "";
-  double _currentWeight = 0.0;
-  double _targetWeight = 0.0;
-  StreamSubscription? _statusSub;
-  StreamSubscription? _progressSub;
-  StreamSubscription? _targetSub;
-
-  @override
-  void initState() {
-    super.initState();
-    _bluetooth = BluetoothService();
-    // Debug-Modus basierend auf dem übergebenen Parameter verwenden
-    _recipeExecutor = RecipeExecutor(_bluetooth, debugMode: widget.isDebugMode);
-    _setupListeners();
-    _startGrinding();
-  }
-
-  void _setupListeners() {
-    _statusSub = _recipeExecutor.statusStream.listen((status) {
-      if (mounted) {
-        setState(() {
-          _status = status;
-        });
-
-        // Zeige Completion-Popup wenn fertig
-        if (status.contains('Rezept fertig!')) {
-          _showCompletionDialog();
-        }
-      }
-    });
-
-    _progressSub = _recipeExecutor.progressStream.listen((weight) {
-      if (mounted) {
-        setState(() {
-          _currentWeight = weight;
-        });
-      }
-    });
-
-    _targetSub = _recipeExecutor.targetStream.listen((target) {
-      if (mounted) {
-        setState(() {
-          _targetWeight = target;
-        });
-      }
-    });
-  }
-
-  void _startGrinding() {
-    // Starte den Mahlvorgang für das angepasste Rezept mit Portionsgröße
-    _recipeExecutor.executeRecipe(widget.recipeKey, widget.portions);
-  }
-
-  Future<void> _goBackToOverviewWithTare() async {
-    // Tarierung im Hintergrund starten (non-blocking)
-    _recipeExecutor.tare().catchError((error) {
-      // Fehler beim Tarieren ignorieren, da es im Hintergrund läuft
-      print('Fehler beim Tarieren im Hintergrund: $error');
-    });
-
-    // Zurück zum Overview Screen navigieren
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (context) => OverviewScreen(isDebugMode: widget.isDebugMode),
-      ),
-      (route) => false, // Entferne alle vorherigen Routen
+        const SizedBox(height: 32),
+        const CircularProgressIndicator(),
+        const SizedBox(height: 32),
+        Text(
+          _status.isEmpty ? 'Bitte warten...' : _status,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: _cancel,
+            child: const Text('Abbrechen'),
+          ),
+        ),
+      ],
     );
   }
 
-  void _showCompletionDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+  Widget _buildGrindingSection() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Mahlvorgang läuft',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: AppColors.primary,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          widget.recipeName,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(height: 24),
+        if (_targetWeight > 0) ...[
+          Text(
+            '${_currentWeight.toStringAsFixed(1)}g / ${_targetWeight.toStringAsFixed(1)}g',
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          LinearProgressIndicator(
+            value: _progress,
+            minHeight: 12,
+            backgroundColor: Colors.grey[300],
+            valueColor: const AlwaysStoppedAnimation(AppColors.support),
+          ),
+          const SizedBox(height: 16),
+        ],
+        Text(
+          _status.isEmpty ? 'Mahle...' : _status,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: _cancel,
+            child: const Text('Abbrechen'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFinishedSection() {
+    final qrPath = _qrMap[widget.recipeKey];
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (qrPath != null)
+          Container(
+            width: 160,
+            height: 160,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
             ),
-            child: Container(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Erfolgs-Icon
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppColors.support,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check,
-                      color: Colors.white,
-                      size: 50,
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Titel
-                  Text(
-                    'Herzlichen Glückwunsch!',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Nachricht
-                  Text(
-                    'Deine Rezeptmischung ist fertig.\nBis zum nächsten Mal!',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.onSurface,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Zurück zum Start Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(
-                          context,
-                        ).pop(); // Schließe zuerst den Dialog
-                        _goBackToOverviewWithTare(); // Dann navigiere mit Tarierung
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text(
-                        'Zurück zum Start',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+            clipBehavior: Clip.antiAlias,
+            child: Image.asset(
+              qrPath,
+              fit: BoxFit.contain,
+              errorBuilder:
+                  (_, __, ___) => const Icon(Icons.qr_code, size: 120),
+            ),
+          )
+        else
+          Container(
+            width: 80,
+            height: 80,
+            decoration: const BoxDecoration(
+              color: AppColors.support,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.check, color: Colors.white, size: 48),
+          ),
+        const SizedBox(height: 24),
+        Text(
+          'Deine Gewürzmischung ist fertig!',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: AppColors.primary,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Bitte Glas entnehmen',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 32),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _navigateBack,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
+            child: const Text(
+              'Neues Rezept wählen',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+            ),
           ),
+        ),
+      ],
     );
-  }
-
-  @override
-  void dispose() {
-    _statusSub?.cancel();
-    _progressSub?.cancel();
-    _targetSub?.cancel();
-    _recipeExecutor.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final progress = _targetWeight > 0 ? _currentWeight / _targetWeight : 0.0;
-    final isFinished = _status.contains('fertig');
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          'Mahlvorgang - ${widget.recipeName}',
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        backgroundColor: AppColors.primary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 40),
-          onPressed: () => Navigator.of(context).pop(),
-          padding: const EdgeInsets.only(left: 24),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        child: Container(
           padding: const EdgeInsets.all(32),
-          child: Column(
-            children: [
-              // Header Info
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppColors.accent,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      widget.recipeName,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${widget.portions} Portion${widget.portions == 1 ? '' : 'en'}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Status
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'Status',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _status.isEmpty ? 'Starte Mahlvorgang...' : _status,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Progress nur anzeigen wenn Zielgewicht > 0
-              if (_targetWeight > 0) ...[
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Fortschritt',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '${_currentWeight.toStringAsFixed(1)}g / ${_targetWeight.toStringAsFixed(1)}g',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      LinearProgressIndicator(
-                        value: progress.clamp(0.0, 1.0),
-                        minHeight: 12,
-                        backgroundColor: Colors.grey[300],
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          isFinished ? AppColors.support : AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
-
-              const Spacer(),
-
-              // Action Buttons
-              if (isFinished) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop(); // Zurück zur Recipe Detail
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.support,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Text(
-                      'Fertig!',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ] else ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      _recipeExecutor.stop();
-                      Navigator.of(context).pop();
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: const BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Text(
-                      'Abbrechen',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
+          child: _buildBody(),
         ),
       ),
     );

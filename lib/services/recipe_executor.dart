@@ -206,10 +206,10 @@ class RecipeExecutor {
 
   Future<void> _tareAndWait() async {
     if (_debugMode) {
-      _statusController.add("Tariere Waage...");
+      // _statusController.add("Tariere Waage...");
       await Future.delayed(Duration(milliseconds: 500)); // Verkürzt für Debug
     } else {
-      _statusController.add("Tariere Waage...");
+      // _statusController.add("Tariere Waage...");
       _bluetooth.sendData("<2;0;0>");
       await Future.delayed(Duration(seconds: 2));
     }

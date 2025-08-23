@@ -107,6 +107,13 @@ class _OverviewScreenState extends State<OverviewScreen> {
         recipeName.toLowerCase().replaceAll(' ', '_');
   }
 
+  // Hilfsfunktion um zu prüfen, ob ein Rezept Chili enthält
+  bool _hasChili(String recipeName) {
+    String recipeKey = _getRecipeKey(recipeName);
+    Map<String, double>? recipe = recipes[recipeKey];
+    return recipe != null && (recipe['chili'] ?? 0.0) > 0.0;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -246,6 +253,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
                     recipe: recipe,
                     recipeKey: _getRecipeKey(recipe.name),
                     isDebugMode: widget.isDebugMode,
+                    hasChili: _hasChili(recipe.name),
                   );
                 },
               ),
@@ -269,12 +277,14 @@ class RecipeCard extends StatelessWidget {
   final Recipe recipe;
   final String recipeKey;
   final bool isDebugMode;
+  final bool hasChili;
 
   const RecipeCard({
     super.key,
     required this.recipe,
     required this.recipeKey,
     required this.isDebugMode,
+    required this.hasChili,
   });
 
   @override
@@ -332,13 +342,23 @@ class RecipeCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      recipe.name,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            recipe.name,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (hasChili)
+                          const Padding(
+                            padding: EdgeInsets.only(left: 4),
+                            child: Text('🌶️', style: TextStyle(fontSize: 14)),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(

@@ -39,13 +39,15 @@ int CURRENT_MOTOR_SPEED = 0;
 
 int PROGRAM = 0;
 // program 0 = stop motor
-// program 1 = start motor
+// program 1 = start motor foward
+// program -1 = start motor reverse
 // program 2 = tare scale (takes 2-3 seconds)
 // program 3 = calibrate scale
 
+
 int TARGET_MOTOR_ID = 0;
-int currentMotorPin1 = 0;
-int currentMotorPin2 = 0;
+int currentMotorPin1 = 0; // Pin 1 is always a PWM Pin
+int currentMotorPin2 = 0; // Pin 2 is always a digital Pin
 
 // --- Define BLE Service and Characteristics ---
 // Use the same UUIDs as in your Flutter app  (Nordic UART Service - NUS)
@@ -122,19 +124,19 @@ void loop()
 
   // ################################ MOTOR RELATED START
   // If the current weight is above 0.4*TARGET_WEIGHT, slow down the motor to 70% of TARGET_MOTOR_SPEED
-  if (CURRENT_WEIGHT >= 0.8 * TARGET_WEIGHT && CURRENT_WEIGHT < 0.8 * TARGET_WEIGHT && flavorly_is_running == true)
-  {
-    int newSpeed = TARGET_MOTOR_SPEED * 0.7;
-    startMotor(newSpeed);
-  }
+  //if (CURRENT_WEIGHT >= 0.8 * TARGET_WEIGHT && CURRENT_WEIGHT < 0.8 * TARGET_WEIGHT && flavorly_is_running == true)
+  //{
+    //int newSpeed = TARGET_MOTOR_SPEED * 0.7;
+    //startMotor(newSpeed);
+  //}
 
 
   // If the current weight is above 0.9*TARGET_WEIGHT, stop the motor
-  if (CURRENT_WEIGHT >= 0.95 * TARGET_WEIGHT)
+  if (CURRENT_WEIGHT >= 0.98 * TARGET_WEIGHT)
   {
     stopMotor();
   }
-  if (CURRENT_WEIGHT < TARGET_WEIGHT && CURRENT_MOTOR_SPEED == 0 && flavorly_is_running == true)
+  if (CURRENT_WEIGHT < TARGET_WEIGHT  && flavorly_is_running == true)
   {
     startMotor(TARGET_MOTOR_SPEED);
   
@@ -215,7 +217,12 @@ void onFrontEndSentData(BLEDevice central, BLECharacteristic characteristic)
     stopMotor();
     break;
   case 1: // Normal operation
+    TARGET_MOTOR_SPEED = 255;
     flavorly_is_running = true;
+    break;
+  case -1:
+    flavorly_is_running = true;
+    TARGET_MOTOR_SPEED = -1;
     break;
   case 2: // Tare scale
     Serial.println("Taring scale...");
@@ -269,10 +276,17 @@ void startMotor(int speed)
   Serial.println(TARGET_MOTOR_ID);
   setCurrentMotorPins();
 
-  Serial.print("Starting Motor ...");
-  analogWrite(currentMotorPin1, speed);
-  digitalWrite(currentMotorPin2, LOW);
-
+  if (speed >= 0){
+    Serial.print("Starting Motor normal direction ..."); 
+      analogWrite(currentMotorPin1, speed);
+      digitalWrite(currentMotorPin2, LOW);
+  }
+  else {
+      Serial.print("Starting Motor reverse direction ..."); 
+      analogWrite(currentMotorPin1, LOW);
+      digitalWrite(currentMotorPin2, HIGH);
+  }
+  
   CURRENT_MOTOR_SPEED = speed;
 }
 

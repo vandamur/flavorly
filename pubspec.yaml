@@ -23,5 +23,6 @@ flutter:
   
   assets:
     - assets/
+    - assets/qr_codes/
 
 

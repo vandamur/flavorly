@@ -192,7 +192,7 @@ class _GlassPlacementDialogState extends State<GlassPlacementDialog> {
           ],
         );
       case _DialogPhase.taring:
-        return _buildProgressSection(title: 'Tariere Waage...');
+        return _buildProgressSection(title: 'Waage wird tariert');
       case _DialogPhase.grinding:
         return _buildGrindingSection();
       case _DialogPhase.finished:
@@ -283,36 +283,35 @@ class _GlassPlacementDialogState extends State<GlassPlacementDialog> {
 
   Widget _buildFinishedSection() {
     final qrPath = _qrMap[widget.recipeKey];
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (qrPath != null)
-          Container(
-            width: 160,
-            height: 160,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Image.asset(
-              qrPath,
-              fit: BoxFit.contain,
-              errorBuilder:
-                  (_, __, ___) => const Icon(Icons.qr_code, size: 120),
-            ),
-          )
-        else
-          Container(
-            width: 80,
-            height: 80,
-            decoration: const BoxDecoration(
-              color: AppColors.support,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.check, color: Colors.white, size: 48),
+        // Zeige sowohl den gemappten als auch einen Test-QR
+        Container(
+          width: 160,
+          height: 160,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.primary.withOpacity(0.2)),
           ),
+          clipBehavior: Clip.antiAlias,
+          child: Image.asset(
+            qrPath!,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.qr_code, size: 60, color: Colors.red),
+                  Text('Fehler: $qrPath', style: TextStyle(fontSize: 10)),
+                ],
+              );
+            },
+          ),
+        ),
+
         const SizedBox(height: 24),
         Text(
           'Deine Gewürzmischung ist fertig!',

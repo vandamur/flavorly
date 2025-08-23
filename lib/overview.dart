@@ -15,12 +15,17 @@ class OverviewScreen extends StatefulWidget {
 class _OverviewScreenState extends State<OverviewScreen> {
   String selectedCategory = 'Alle';
 
-  final List<String> categories = [
-    'Alle',
-    RecipeCategories.vegan,
-    RecipeCategories.sauce,
-    RecipeCategories.international,
-  ];
+  final Map<String, String> filterCategories = {
+    'Alle': '🍽️',
+    'Dips': '🫙',
+    'Fleisch': '🥩',
+    'Glutenfrei': '🌽',
+    'Hauptgerichte': '🍲',
+    'International': '🌍',
+    'Laktosefrei': '🥛',
+    'Sauce': '🧂',
+    'Vegan': '🥗',
+  };
 
   final List<Recipe> allRecipes = [
     Recipe('Baba Ganoush', 'BabaGanoush.jpeg', 'Vorspeisen'),
@@ -123,6 +128,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 ],
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
                     'flavorly',
@@ -141,25 +147,35 @@ class _OverviewScreenState extends State<OverviewScreen> {
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: categories.length,
+                itemCount: filterCategories.length,
                 itemBuilder: (context, index) {
-                  final category = categories[index];
+                  final category = filterCategories.keys.elementAt(index);
+                  final emoji = filterCategories[category]!;
                   final isSelected = category == selectedCategory;
 
                   return Padding(
                     padding: const EdgeInsets.only(right: 12),
                     child: FilterChip(
-                      label: Text(
-                        category,
-                        style: TextStyle(
-                          color:
-                              isSelected
-                                  ? Colors.black87
-                                  : Theme.of(context).colorScheme.onSurface,
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.w500,
-                          fontSize: 16,
-                        ),
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(emoji, style: const TextStyle(fontSize: 16)),
+                          const SizedBox(width: 6),
+                          Text(
+                            category,
+                            style: TextStyle(
+                              color:
+                                  isSelected
+                                      ? Colors.black87
+                                      : Theme.of(context).colorScheme.onSurface,
+                              fontWeight:
+                                  isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
                       selected: isSelected,
                       onSelected: (selected) {

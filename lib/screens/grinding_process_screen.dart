@@ -237,7 +237,7 @@ class _GlassPlacementDialogState extends State<GlassPlacementDialog> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Mahlvorgang läuft ${widget.recipeName}',
+          'Mahlvorgang für ${widget.recipeName} läuft',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,

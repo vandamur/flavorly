@@ -96,25 +96,25 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   // Zubereitungszeiten
   static const Map<String, int> cookingTimes = {
-    'Baba Ganoush': 30,
-    'Barbacoa': 180,
-    'Brasilianisches Picadillo': 45,
-    'Cowboy Caviar': 15,
+    'Baba Ganoush': 145,
+    'Barbacoa': 405,
+    'Brasilianisches Picadillo': 60,
+    'Cowboy Caviar': 30,
     'Feuertopf': 60,
-    'Ful Medames': 90,
-    'Gefüllte Auberginen': 75,
+    'Ful Medames': 770,
+    'Gefüllte Auberginen': 55,
     'Gelbe Zucchini Pfanne': 25,
-    'Italienische Tomatensoße': 45,
+    'Italienische Tomatensoße': 40,
     'Köfte': 30,
-    'Kubanische Empanadas': 60,
-    'Muhammara': 20,
-    'Paprika Feta Dip': 25,
-    'Pilz Döner': 35,
-    'Puten Gyros': 40,
-    'Ropa Vieja': 120,
-    'Salsa Roja': 20,
-    'Tex Mex Auflauf': 50,
-    'Tintenfisch': 30,
+    'Kubanische Empanadas': 75,
+    'Muhammara': 15,
+    'Paprika Feta Dip': 45,
+    'Pilz Döner': 50,
+    'Puten Gyros': 90,
+    'Ropa Vieja': 330,
+    'Salsa Roja': 55,
+    'Tex Mex Auflauf': 65,
+    'Tintenfisch': 65,
     'Würziger Feta Aufstrich': 15,
   };
 
@@ -128,26 +128,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   }
 
   List<String> get tags {
-    List<String> tags = [widget.category];
-
-    // Zusätzliche Tags basierend auf Gewürzen
-    final recipe = recipeData;
-    if (recipe != null) {
-      bool hasChili = (recipe['chili'] ?? 0.0) > 0;
-      bool isVegetarian =
-          widget.category == 'Vegetarisch' || widget.category == 'Vorspeisen';
-
-      if (hasChili) tags.add('SCHARF');
-      if (isVegetarian) tags.add('VEGETARISCH');
-      if (widget.recipeName.contains('Feta') ||
-          widget.recipeName.contains('Käse')) {
-        // tags.add('GLUTENFREI'); // Falls gewünscht
-      } else {
-        tags.add('GLUTENFREI');
-      }
-    }
-
-    return tags;
+    return [widget.category];
   }
 
   @override

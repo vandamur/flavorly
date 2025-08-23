@@ -6,6 +6,10 @@ class RecipeExecutor {
   final BluetoothService _bluetooth;
   StreamSubscription<String>? _bluetoothDataSubscription;
   bool _debugMode = false; // Debug-Modus Flag
+  bool useAlternativeMotorMode = false; // Alternativer Mahlmodus Flag
+
+  // Globale Einstellung für alternativen Modus
+  static bool globalUseAlternativeMotorMode = false;
 
   // Motor-Mapping
   static const Map<String, int> spiceToMotor = {
@@ -20,6 +24,8 @@ class RecipeExecutor {
   bool _isExecuting = false;
   double _currentTargetWeight = 0.0;
   String _lastReceivedWeight = "0";
+  Timer? _alternativeMotorTimer; // Timer für alternativen Modus
+  bool _isForwardDirection = true; // Aktuelle Richtung im alternativen Modus
   StreamController<String> _statusController = StreamController.broadcast();
   StreamController<double> _progressController = StreamController.broadcast();
   StreamController<double> _targetController = StreamController.broadcast();
@@ -29,6 +35,9 @@ class RecipeExecutor {
 
   RecipeExecutor(this._bluetooth, {bool debugMode = false})
     : _debugMode = debugMode {
+    // Verwende globale Einstellung
+    useAlternativeMotorMode = globalUseAlternativeMotorMode;
+
     // Bluetooth-Daten abonnieren
     _bluetoothDataSubscription = _bluetooth.receivedData.listen((data) {
       _lastReceivedWeight = data.trim();
@@ -75,16 +84,21 @@ class RecipeExecutor {
       await _simulateGrinding(targetWeight);
     } else {
       // Echter Mahlvorgang
-      // Motor starten
-      _bluetooth.sendData("<1;$motorID;$targetWeight>");
-      await Future.delayed(Duration(milliseconds: 500));
+      if (useAlternativeMotorMode) {
+        // Alternativer Modus mit wechselnder Richtung alle 1s
+        await _grindWithAlternativeMode(motorID, targetWeight);
+      } else {
+        // Normaler Modus (nur vorwärts)
+        _bluetooth.sendData("<1;$motorID;$targetWeight>");
+        await Future.delayed(Duration(milliseconds: 500));
 
-      // Warten bis Zielgewicht erreicht
-      await _waitForTargetWeight(targetWeight);
+        // Warten bis Zielgewicht erreicht
+        await _waitForTargetWeight(targetWeight);
 
-      // Motor stoppen
-      _bluetooth.sendData("<0;$motorID;0>");
-      await Future.delayed(Duration(milliseconds: 500));
+        // Motor stoppen
+        _bluetooth.sendData("<0;$motorID;0>");
+        await Future.delayed(Duration(milliseconds: 500));
+      }
     }
   }
 
@@ -106,6 +120,44 @@ class RecipeExecutor {
         await Future.delayed(Duration(milliseconds: updateInterval));
       }
     }
+  }
+
+  Future<void> _grindWithAlternativeMode(
+    int motorID,
+    double targetWeight,
+  ) async {
+    _isForwardDirection = true; // Beginne mit Vorwärtsrichtung
+
+    // Starte den ersten Motor
+    _bluetooth.sendData("<1;$motorID;$targetWeight>");
+    await Future.delayed(Duration(milliseconds: 500));
+
+    // Timer für das Wechseln der Richtung alle 1 Sekunde
+    _alternativeMotorTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (!_isExecuting) {
+        timer.cancel();
+        return;
+      }
+
+      // Richtung wechseln
+      _isForwardDirection = !_isForwardDirection;
+
+      if (_isForwardDirection) {
+        // Programm 1: Vorwärts
+        _bluetooth.sendData("<1;$motorID;$targetWeight>");
+      } else {
+        // Programm 4: Rückwärts
+        _bluetooth.sendData("<4;$motorID;$targetWeight>");
+      }
+    });
+
+    // Warten bis Zielgewicht erreicht
+    await _waitForTargetWeight(targetWeight);
+
+    // Timer stoppen und Motor stoppen
+    _alternativeMotorTimer?.cancel();
+    _bluetooth.sendData("<0;$motorID;0>");
+    await Future.delayed(Duration(milliseconds: 1000));
   }
 
   String _getCurrentWeightFromBluetooth() {
@@ -170,6 +222,7 @@ class RecipeExecutor {
 
   void dispose() {
     _bluetoothDataSubscription?.cancel();
+    _alternativeMotorTimer?.cancel();
     _statusController.close();
     _progressController.close();
     _targetController.close();
@@ -189,6 +242,7 @@ class RecipeExecutor {
 
   void stop() {
     _isExecuting = false;
+    _alternativeMotorTimer?.cancel();
     _statusController.add("Gestoppt");
   }
 }

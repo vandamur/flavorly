@@ -23,6 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isTaring = false;
   int _motorID = 1;
   String _selectedRecipe = "muhammara";
+  bool _useAlternativeMotorMode = false; // Alternativer Mahlmodus Flag
 
   fbp.BluetoothDevice? _connectedDevice;
 
@@ -39,6 +40,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     // Aktuellen Verbindungsstatus abrufen
     _connectedDevice = _bluetooth.connectedDevice;
+
+    // Globale Einstellung laden
+    _useAlternativeMotorMode = RecipeExecutor.globalUseAlternativeMotorMode;
 
     // Keine neue Scan-Session starten - verwende bestehende Verbindung
   }
@@ -225,6 +229,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
+
+              const SizedBox(height: 10),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Alternativer Mahlmodus:'),
+                  Switch(
+                    value: _useAlternativeMotorMode,
+                    onChanged: (value) {
+                      setState(() {
+                        _useAlternativeMotorMode = value;
+                        // Globale Einstellung setzen
+                        RecipeExecutor.globalUseAlternativeMotorMode = value;
+                        // Aktuelle Instanz aktualisieren
+                        _recipeExecutor.useAlternativeMotorMode = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,

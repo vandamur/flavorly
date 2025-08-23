@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'theme/app_colors.dart';
 import 'screens/recipe_detail_screen.dart';
+import 'data/recipes.dart';
 
 class OverviewScreen extends StatefulWidget {
   final bool isDebugMode;
@@ -16,14 +17,9 @@ class _OverviewScreenState extends State<OverviewScreen> {
 
   final List<String> categories = [
     'Alle',
-    'Vorspeisen',
-    'Hauptgerichte',
-    'Dips',
-    'Vegetarisch',
-    'Fleisch',
-    'Laktosefrei',
-    'Glutenfrei',
-    'International',
+    RecipeCategories.vegan,
+    RecipeCategories.sauce,
+    RecipeCategories.international,
   ];
 
   final List<Recipe> allRecipes = [
@@ -65,9 +61,17 @@ class _OverviewScreenState extends State<OverviewScreen> {
     if (selectedCategory == 'Alle') {
       return allRecipes;
     }
-    return allRecipes
-        .where((recipe) => recipe.category == selectedCategory)
-        .toList();
+
+    return allRecipes.where((recipe) {
+      // Rezept-Key aus dem Namen ermitteln
+      String recipeKey = _getRecipeKey(recipe.name);
+
+      // Kategorien für dieses Rezept aus der Map holen (aus data/recipes.dart)
+      List<String>? categories = recipeCategories[recipeKey];
+
+      // Prüfen ob die ausgewählte Kategorie in den Rezept-Kategorien enthalten ist
+      return categories?.contains(selectedCategory) ?? false;
+    }).toList();
   }
 
   // Hilfsfunktion zum Mapping von UI-Namen zu Rezept-Keys

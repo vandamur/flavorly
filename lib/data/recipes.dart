@@ -1,5 +1,3 @@
-// Jedes Rezept enthält die Gewürze mit ihren jeweiligen Mengen in Gramm
-
 const Map<String, Map<String, double>> recipes = {
   "auberginen": {
     "oregano": 0.0,
@@ -182,15 +180,198 @@ const Map<String, Map<String, double>> recipes = {
   },
 };
 
-// Hilfsfunktionen für den Zugriff auf Rezepte
+class RecipeCategories {
+  static const String vegan = "Vegan";
+  static const String sauce = "Sauce";
+  static const String international = "International";
+  static const String glutenfrei = "Glutenfrei";
+  static const String laktosefrei = "Laktosefrei";
+  static const String vegetarisch = "Vegetarisch";
+  static const String vorspeisen = "Vorspeisen";
+  static const String hauptgerichte = "Hauptgerichte";
+  static const String dips = "Dips";
+  static const String fleisch = "Fleisch";
+}
+
+const Map<String, List<String>> recipeCategories = {
+  "auberginen": [
+    RecipeCategories.international,
+    RecipeCategories.glutenfrei,
+    RecipeCategories.hauptgerichte,
+  ],
+
+  "baba_ganoush": [
+    RecipeCategories.vegan,
+    RecipeCategories.international,
+    RecipeCategories.vorspeisen,
+    RecipeCategories.glutenfrei,
+    RecipeCategories.dips,
+  ],
+
+  "barbacoa": [
+    RecipeCategories.international,
+    RecipeCategories.hauptgerichte,
+    RecipeCategories.fleisch,
+    RecipeCategories.glutenfrei,
+    RecipeCategories.laktosefrei,
+  ],
+
+  "cowboy_caviar": [
+    RecipeCategories.vegan,
+    RecipeCategories.international,
+    RecipeCategories.glutenfrei,
+    RecipeCategories.laktosefrei,
+    RecipeCategories.vegetarisch,
+    RecipeCategories.dips,
+  ],
+
+  "doener": [
+    RecipeCategories.international,
+    RecipeCategories.hauptgerichte,
+    RecipeCategories.glutenfrei,
+    RecipeCategories.laktosefrei,
+  ],
+
+  "empanadas": [
+    RecipeCategories.international,
+    RecipeCategories.hauptgerichte,
+    RecipeCategories.glutenfrei,
+    RecipeCategories.laktosefrei,
+  ],
+
+  "feta_aufstrich": [
+    RecipeCategories.vegetarisch,
+    RecipeCategories.dips,
+    RecipeCategories.vorspeisen,
+  ],
+
+  "feuertopf": [
+    RecipeCategories.international,
+    RecipeCategories.hauptgerichte,
+    RecipeCategories.fleisch,
+  ],
+
+  "ful_medames": [
+    RecipeCategories.vegan,
+    RecipeCategories.international,
+    RecipeCategories.glutenfrei,
+    RecipeCategories.laktosefrei,
+    RecipeCategories.vegetarisch,
+    RecipeCategories.hauptgerichte,
+  ],
+
+  "koefte": [
+    RecipeCategories.international,
+    RecipeCategories.hauptgerichte,
+    RecipeCategories.fleisch,
+  ],
+
+  "muhammara": [
+    RecipeCategories.vegan,
+    RecipeCategories.international,
+    RecipeCategories.dips,
+    RecipeCategories.glutenfrei,
+    RecipeCategories.laktosefrei,
+  ],
+
+  "paprika_feta_dip": [
+    RecipeCategories.dips,
+    RecipeCategories.vegetarisch,
+    RecipeCategories.vorspeisen,
+  ],
+
+  "picadillo": [
+    RecipeCategories.international,
+    RecipeCategories.hauptgerichte,
+    RecipeCategories.fleisch,
+  ],
+
+  "puten_gyros": [
+    RecipeCategories.international,
+    RecipeCategories.hauptgerichte,
+    RecipeCategories.fleisch,
+  ],
+
+  "ropa_vieja": [
+    RecipeCategories.international,
+    RecipeCategories.hauptgerichte,
+    RecipeCategories.fleisch,
+  ],
+
+  "salsa_roja": [
+    RecipeCategories.sauce,
+    RecipeCategories.vegan,
+    RecipeCategories.international,
+    RecipeCategories.glutenfrei,
+    RecipeCategories.laktosefrei,
+    RecipeCategories.dips,
+    RecipeCategories.vegetarisch,
+  ],
+
+  "tex_mex": [
+    RecipeCategories.international,
+    RecipeCategories.hauptgerichte,
+    RecipeCategories.fleisch,
+  ],
+
+  "tintenfisch": [
+    RecipeCategories.international,
+    RecipeCategories.hauptgerichte,
+    RecipeCategories.glutenfrei,
+    RecipeCategories.laktosefrei,
+  ],
+
+  "tomatensosse": [
+    RecipeCategories.sauce,
+    RecipeCategories.vegan,
+    RecipeCategories.glutenfrei,
+    RecipeCategories.laktosefrei,
+  ],
+
+  "zucchini_pfanne": [
+    RecipeCategories.vegan,
+    RecipeCategories.hauptgerichte,
+    RecipeCategories.glutenfrei,
+    RecipeCategories.laktosefrei,
+  ],
+};
+
 class RecipeCatalog {
-  /// Gibt alle verfügbaren Rezeptnamen zurück
   static List<String> getAllRecipeNames() {
     return recipes.keys.toList();
   }
 
-  /// Gibt ein spezifisches Rezept zurück
   static Map<String, double>? getRecipe(String recipeName) {
     return recipes[recipeName];
+  }
+
+  static List<String> getRecipeCategories(String recipeName) {
+    return recipeCategories[recipeName] ?? [];
+  }
+
+  static List<String> getRecipesByCategory(String category) {
+    return recipeCategories.entries
+        .where((entry) => entry.value.contains(category))
+        .map((entry) => entry.key)
+        .toList();
+  }
+
+  static bool isRecipeInCategory(String recipeName, String category) {
+    return recipeCategories[recipeName]?.contains(category) ?? false;
+  }
+
+  static List<String> getAllCategories() {
+    final Set<String> allCategories = {};
+    for (final categoryList in recipeCategories.values) {
+      allCategories.addAll(categoryList);
+    }
+    return allCategories.toList()..sort();
+  }
+
+  static List<String> getRecipesByMultipleCategories(List<String> categories) {
+    return recipeCategories.entries
+        .where((entry) => categories.every((cat) => entry.value.contains(cat)))
+        .map((entry) => entry.key)
+        .toList();
   }
 }

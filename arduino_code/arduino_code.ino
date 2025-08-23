@@ -40,9 +40,9 @@ int CURRENT_MOTOR_SPEED = 0;
 int PROGRAM = 0;
 // program 0 = stop motor
 // program 1 = start motor foward
-// program -1 = start motor reverse
 // program 2 = tare scale (takes 2-3 seconds)
 // program 3 = calibrate scale
+// program 4 = start motor reverse
 
 
 int TARGET_MOTOR_ID = 0;
@@ -220,10 +220,7 @@ void onFrontEndSentData(BLEDevice central, BLECharacteristic characteristic)
     TARGET_MOTOR_SPEED = 255;
     flavorly_is_running = true;
     break;
-  case -1:
-    flavorly_is_running = true;
-    TARGET_MOTOR_SPEED = -1;
-    break;
+
   case 2: // Tare scale
     Serial.println("Taring scale...");
     LoadCell.tare(); // Tare the scale
@@ -231,6 +228,12 @@ void onFrontEndSentData(BLEDevice central, BLECharacteristic characteristic)
     break;
   case 3: // Calibrate scale
     calibrateScale(TARGET_WEIGHT);
+    break;
+    
+  case 4:
+    TARGET_MOTOR_SPEED = -1;
+    flavorly_is_running = true;
+
     break;
   }
 }

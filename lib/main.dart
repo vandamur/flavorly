@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_colors.dart';
 import 'overview.dart';
+import 'screens/welcome_screen.dart';
 import 'services/bluetooth_service.dart';
 import 'screens/settings_screen.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart' as fbp;
@@ -20,8 +21,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       title: 'flavorly',
       theme: AppTheme.lightTheme,
-      home: const StartScreen(),
-    );
+      home: const StartScreen(), 
   }
 }
 
@@ -253,10 +253,7 @@ class _StartScreenState extends State<StartScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder:
-                                    (context) => const OverviewScreen(
-                                      isDebugMode: false,
-                                    ),
+                                builder: (context) => const WelcomeScreen(),
                               ),
                             );
                           }
@@ -341,9 +338,7 @@ class _StartScreenState extends State<StartScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                const OverviewScreen(isDebugMode: true),
+                        builder: (context) => const WelcomeScreen(),
                       ),
                     );
                   },

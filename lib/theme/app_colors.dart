@@ -5,10 +5,10 @@ class AppColors {
   static const Color primary = Color(0xFF701539);
   static const Color accent = Color(0xFFFFB238);
   static const Color support = Color(0xFF387E56);
-  static const Color background = Color(0xFFFAFAFA);
+  static const Color background = Color(0xFFFFFAF2);
 
   // Zusätzliche UI-Farben
-  static const Color surface = Colors.white;
+  static const Color surface = Color(0xFFFFFAF2);
   static const Color onPrimary = Colors.white;
   static const Color onBackground = Color(0xFF1A1A1A);
   static const Color onSurface = Color(0xFF1A1A1A);

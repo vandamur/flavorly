@@ -237,7 +237,7 @@ class _GlassPlacementDialogState extends State<GlassPlacementDialog> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Mahlvorgang läuft',
+          'Mahlvorgang läuft ${widget.recipeName}',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,
@@ -246,7 +246,7 @@ class _GlassPlacementDialogState extends State<GlassPlacementDialog> {
         ),
         const SizedBox(height: 16),
         Text(
-          widget.recipeName,
+          _status.isNotEmpty ? _status : 'Mahle ${widget.recipeName}',
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -268,19 +268,15 @@ class _GlassPlacementDialogState extends State<GlassPlacementDialog> {
           ),
           const SizedBox(height: 16),
         ],
-        Text(
-          _status.isEmpty ? 'Mahle...' : _status,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+
         const SizedBox(height: 24),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: _cancel,
-            child: const Text('Abbrechen'),
-          ),
-        ),
+        // SizedBox(
+        //   width: double.infinity,
+        //   child: OutlinedButton(
+        //     onPressed: _cancel,
+        //     child: const Text('Abbrechen'),
+        //   ),
+        // ),
       ],
     );
   }

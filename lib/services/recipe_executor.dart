@@ -112,9 +112,6 @@ class RecipeExecutor {
       final currentWeight = targetWeight * progress;
 
       _progressController.add(currentWeight);
-      _statusController.add(
-        "Mahle... ${currentWeight.toStringAsFixed(1)}g / ${targetWeight.toStringAsFixed(1)}g",
-      );
 
       if (i < steps) {
         await Future.delayed(Duration(milliseconds: updateInterval));
@@ -192,11 +189,7 @@ class RecipeExecutor {
       _progressController.add(currentWeight);
 
       // Status Update alle 10 Iterationen (1 Sekunde)
-      if (timeoutCount % 10 == 0) {
-        _statusController.add(
-          "Mahle... ${currentWeight.toStringAsFixed(1)}g / ${targetWeight.toStringAsFixed(1)}g",
-        );
-      }
+      // Keine zusätzlichen Statusmeldungen – nur Anfang (Gewürz) und Ende/Timeout
     }
 
     if (timeoutCount >= maxTimeout) {

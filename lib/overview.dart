@@ -116,25 +116,34 @@ class _OverviewScreenState extends State<OverviewScreen> {
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              decoration: const BoxDecoration(color: AppColors.primary),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text(
-                    'flavorly',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.headlineMedium?.copyWith(color: Colors.white),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'flavorly',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Frisch gemahlen nach Rezept',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.85),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -142,8 +151,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
 
             // Filter Kategorien
             Container(
-              height: 80,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              height: 70,
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -154,45 +163,69 @@ class _OverviewScreenState extends State<OverviewScreen> {
                   final isSelected = category == selectedCategory;
 
                   return Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: FilterChip(
-                      label: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(emoji, style: const TextStyle(fontSize: 16)),
-                          const SizedBox(width: 6),
-                          Text(
-                            category,
-                            style: TextStyle(
-                              color:
-                                  isSelected
-                                      ? Colors.black87
-                                      : Theme.of(context).colorScheme.onSurface,
-                              fontWeight:
-                                  isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w500,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      selected: isSelected,
-                      onSelected: (selected) {
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () {
                         setState(() {
                           selectedCategory = category;
                         });
                       },
-                      backgroundColor: Theme.of(context).colorScheme.surface,
-                      selectedColor: AppColors.accent,
-                      elevation: isSelected ? 4 : 1,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color:
+                              isSelected
+                                  ? AppColors.primary
+                                  : Colors.grey.shade100,
+                          border:
+                              isSelected
+                                  ? null
+                                  : Border.all(
+                                    color: Colors.grey.shade300,
+                                    width: 0.5,
+                                  ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(emoji, style: const TextStyle(fontSize: 14)),
+                            const SizedBox(width: 6),
+                            Text(
+                              category,
+                              style: TextStyle(
+                                color:
+                                    isSelected
+                                        ? Colors.white
+                                        : Colors.grey.shade700,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 13,
+                                letterSpacing: 0.1,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
                 },
+              ),
+            ),
+
+            // Welcoming Message
+            Container(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+              child: Text(
+                'Entdecke köstliche Rezepte und mahle dazu maßgeschneiderte Gewürzmischungen',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800,
+                  letterSpacing: -0.2,
+                ),
               ),
             ),
 

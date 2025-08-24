@@ -115,27 +115,30 @@ class AppTheme {
 
       // Text Styles
       textTheme: const TextTheme(
-        // Headlines
+        // Headlines - mit Poppins
         headlineLarge: TextStyle(
           color: AppColors.primary,
           fontSize: 48,
           fontWeight: FontWeight.bold,
           height: 1.2,
+          fontFamily: 'Poppins',
         ),
         headlineMedium: TextStyle(
           color: AppColors.primary,
           fontSize: 40,
           fontWeight: FontWeight.w600,
           height: 1.3,
+          fontFamily: 'Poppins',
         ),
         headlineSmall: TextStyle(
           color: AppColors.primary,
           fontSize: 32,
           fontWeight: FontWeight.w600,
           height: 1.3,
+          fontFamily: 'Poppins',
         ),
 
-        // Titles
+        // Titles - Standard Font
         titleLarge: TextStyle(
           color: AppColors.onBackground,
           fontSize: 28,
@@ -155,7 +158,7 @@ class AppTheme {
           height: 1.4,
         ),
 
-        // Body Text
+        // Body Text - Standard Font
         bodyLarge: TextStyle(
           color: AppColors.onBackground,
           fontSize: 22,
@@ -172,7 +175,7 @@ class AppTheme {
           height: 1.4,
         ),
 
-        // Labels
+        // Labels - Standard Font
         labelLarge: TextStyle(
           color: AppColors.support,
           fontSize: 20,

@@ -309,9 +309,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'PORTIONEN',
+                            'Für wie viele Portionen möchtest du kochen?',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 24,
                               fontWeight: FontWeight.bold,
                               color: AppColors.support,
                               letterSpacing: 1.2,

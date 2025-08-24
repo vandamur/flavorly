@@ -288,28 +288,45 @@ class _GlassPlacementDialogState extends State<GlassPlacementDialog> {
       mainAxisSize: MainAxisSize.min,
       children: [
         // Zeige sowohl den gemappten als auch einen Test-QR
-        Container(
-          width: 160,
-          height: 160,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Image.asset(
-            qrPath!,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.qr_code, size: 60, color: Colors.red),
-                  Text('Fehler: $qrPath', style: TextStyle(fontSize: 10)),
-                ],
-              );
-            },
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Image.asset(
+                qrPath!,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.qr_code, size: 60, color: Colors.red),
+                      Text('Fehler: $qrPath', style: TextStyle(fontSize: 10)),
+                    ],
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Text(
+                'Scanne für das Rezept\nund die Einkaufsliste!',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ),
 
         const SizedBox(height: 24),

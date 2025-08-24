@@ -25,6 +25,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
     'Laktosefrei': '🥛',
     'Sauce': '🧂',
     'Vegan': '🥗',
+    'Vorspeisen': '🥙',
   };
 
   final List<Recipe> allRecipes = [

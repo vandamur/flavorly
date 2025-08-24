@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 class AppTheme {
@@ -114,79 +115,76 @@ class AppTheme {
       ),
 
       // Text Styles
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
         // Headlines - mit Poppins
-        headlineLarge: TextStyle(
+        headlineLarge: GoogleFonts.poppins(
           color: AppColors.primary,
           fontSize: 48,
           fontWeight: FontWeight.bold,
           height: 1.2,
-          fontFamily: 'Poppins',
         ),
-        headlineMedium: TextStyle(
+        headlineMedium: GoogleFonts.poppins(
           color: AppColors.primary,
           fontSize: 40,
           fontWeight: FontWeight.w600,
           height: 1.3,
-          fontFamily: 'Poppins',
         ),
-        headlineSmall: TextStyle(
+        headlineSmall: GoogleFonts.poppins(
           color: AppColors.primary,
           fontSize: 32,
           fontWeight: FontWeight.w600,
           height: 1.3,
-          fontFamily: 'Poppins',
         ),
 
-        // Titles - Standard Font
-        titleLarge: TextStyle(
+        // Titles - mit Inter
+        titleLarge: GoogleFonts.inter(
           color: AppColors.onBackground,
           fontSize: 28,
           fontWeight: FontWeight.w500,
           height: 1.4,
         ),
-        titleMedium: TextStyle(
+        titleMedium: GoogleFonts.inter(
           color: AppColors.onBackground,
           fontSize: 24,
           fontWeight: FontWeight.w500,
           height: 1.4,
         ),
-        titleSmall: TextStyle(
+        titleSmall: GoogleFonts.inter(
           color: AppColors.onBackground,
           fontSize: 20,
           fontWeight: FontWeight.w500,
           height: 1.4,
         ),
 
-        // Body Text - Standard Font
-        bodyLarge: TextStyle(
+        // Body Text - mit Inter
+        bodyLarge: GoogleFonts.inter(
           color: AppColors.onBackground,
           fontSize: 22,
           height: 1.5,
         ),
-        bodyMedium: TextStyle(
+        bodyMedium: GoogleFonts.inter(
           color: AppColors.onBackground,
           fontSize: 20,
           height: 1.4,
         ),
-        bodySmall: TextStyle(
+        bodySmall: GoogleFonts.inter(
           color: AppColors.grey700,
           fontSize: 18,
           height: 1.4,
         ),
 
-        // Labels - Standard Font
-        labelLarge: TextStyle(
+        // Labels - mit Inter
+        labelLarge: GoogleFonts.inter(
           color: AppColors.support,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
-        labelMedium: TextStyle(
+        labelMedium: GoogleFonts.inter(
           color: AppColors.grey700,
           fontSize: 18,
           fontWeight: FontWeight.w500,
         ),
-        labelSmall: TextStyle(
+        labelSmall: GoogleFonts.inter(
           color: AppColors.grey500,
           fontSize: 16,
           fontWeight: FontWeight.w500,
